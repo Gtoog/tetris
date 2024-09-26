@@ -19,6 +19,9 @@ namespace WindowsFormsApp4
         private Timer timer;
         private List<Square> fallingSquares, fallingNow;
         private int total;
+        private bool isLeftKeyPressed = false;
+        private bool isRightKeyPressed = false;
+        private bool isDownKeyPressed = false;
 
         public Form1()
         {
@@ -31,8 +34,6 @@ namespace WindowsFormsApp4
             timer.Interval = 500;
             timer.Tick += Timer_Tick;
             timer.Start();
-
-            // Начальная фигура
             fallingSquares = new List<Square> { fallsquare };
             fallingNow = new List<Square> { };
         }
@@ -42,6 +43,7 @@ namespace WindowsFormsApp4
             MoveSquaresDown();
             Invalidate();
             this.KeyDown += new KeyEventHandler(Form_KeyDown);
+            this.KeyUp += new KeyEventHandler(Form_KeyUp);
         }
 
         private void MoveSquaresDown()
@@ -56,6 +58,7 @@ namespace WindowsFormsApp4
                     square.Position.X + square.Size.Width > otherSquare.Position.X &&
                     square.Position.Y + square.Size.Height > otherSquare.Position.Y &&
                     square.Position.Y < otherSquare.Position.Y + otherSquare.Size.Height);
+
                 
                 if (square.Position.Y + square.Size.Height + 10 < this.ClientSize.Height && !isTouching)
                 {
@@ -68,7 +71,7 @@ namespace WindowsFormsApp4
                         canSpawnNewSquare = false;
                     }
 
-                    square.Position = new Point(square.Position.X, square.Position.Y + 10);
+                    square.Position = new Point(square.Position.X, square.Position.Y + 5);
                     square.color = Color.Green;
 
                     if (canSpawnNewSquare)
@@ -77,27 +80,102 @@ namespace WindowsFormsApp4
                         fallingNow.Add(square);
                         fallingSquares.Remove(square);
                         fallingSquares.Add(newSquare);
+                        fallNow = newSquare;
+                        CheckAndRemoveFilledLines();
                         break;
                     }
                     else
                     {
                         timer.Stop();
-                       // textBox1.Text = "Игра окончена ваш счет " + total;
+                       textBox1.Text = "Игра окончена ваш счет " + total;
                     }
                 }
             }
         }
+        void CheckAndRemoveFilledLines()
+        {
+            int gameWidth = this.ClientSize.Width - 200;
+            int squareSize = 50;
+
+            HashSet<int> filledLines = new HashSet<int>();
+
+            foreach (var square in fallingNow)
+            {
+                int lineY = square.Position.Y / squareSize; 
+                if (!filledLines.Contains(lineY))
+                {
+                    int occupiedX = square.Position.X / squareSize; 
+                                                                   
+                    if (IsLineFilled(lineY, occupiedX))
+                    {
+                        filledLines.Add(lineY);
+                    }
+                }
+            }
+
+            // Удаляем заполненные линии
+            foreach (var line in filledLines)
+            {
+                RemoveLine(line);
+            }
+
+        }
+        bool IsLineFilled(int lineY, int occupiedX)
+        {
+            int requiredSquares = (this.ClientSize.Width - 100) / 50; 
+            int count = 0;
+
+            foreach (var square in fallingNow)
+            {
+                if (square.Position.Y / 50 == lineY)
+                {
+                    count++;
+                }
+            }
+
+            return count >= requiredSquares; 
+        }
+        void RemoveLine(int lineY)
+        {
+            fallingNow.RemoveAll(square => square.Position.Y / 50 == lineY);
+            total += 50;
+        }
+
+
         private void Form_KeyDown(object sender, KeyEventArgs e)
         {
             var key = e.KeyCode;
+            int raz = 50;
 
-            if (key == Keys.Left && fallNow.Position.X > 0)
+            if (key == Keys.Left && fallNow.Position.X > 0 && !isLeftKeyPressed)
             {
-                fallNow.Position = new Point(fallNow.Position.X - 10, fallNow.Position.Y);
+                fallNow.Position = new Point(fallNow.Position.X - raz, fallNow.Position.Y);
+                isLeftKeyPressed = true; 
             }
-            else if (key == Keys.Right && fallNow.Position.X < this.ClientSize.Width)
+            else if (key == Keys.Right && fallNow.Position.X < this.ClientSize.Width - 200 && !isRightKeyPressed)
             {
-                fallNow.Position = new Point(fallNow.Position.X + 10, fallNow.Position.Y);
+                fallNow.Position = new Point(fallNow.Position.X + raz, fallNow.Position.Y);
+                isRightKeyPressed = true; 
+            }
+            else if (key == Keys.Down && fallNow.Position.Y < this.ClientSize.Height && !isDownKeyPressed)
+            {
+                fallNow.Position = new Point(fallNow.Position.X, fallNow.Position.Y + 10);
+                isDownKeyPressed = true; 
+            }
+        }
+        private void Form_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Left)
+            {
+                isLeftKeyPressed = false;
+            }
+            else if (e.KeyCode == Keys.Right)
+            {
+                isRightKeyPressed = false;
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                isDownKeyPressed = false;
             }
         }
 

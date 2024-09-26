@@ -23,11 +23,25 @@ namespace WindowsFormsApp4
             Application.Run(new Form1());
         }
     }
-    public class Square
+
+    public abstract class Shape
     {
-        public Size Size { get; }
         public Point Position { get; set; }
-        public Color color { get; internal set; }
+        public Size Size { get; set; }
+        public Color color { get; set; }
+
+        public abstract void Draw(Graphics g);
+        public void Fall(Graphics g)
+        {
+            using (Brush brush = new SolidBrush(color))
+            {
+                g.FillRectangle(brush, Position.X, Position.Y, Size.Width, Size.Height);
+            }
+        }
+    }
+
+    public class Square : Shape
+    {
 
         public Square(int width, int height, Point position)
         {
@@ -36,16 +50,26 @@ namespace WindowsFormsApp4
             color = Color.Blue;
         }
 
-        public void Fall(Graphics g)
+        public override void Draw(Graphics g)
         {
-            using (Brush brush = new SolidBrush(color))
-            {
-                g.FillRectangle(brush, Position.X, Position.Y, Size.Width, Size.Height);
-            }
+            g.FillRectangle(Brushes.Green, Position.X, Position.Y, Size.Width, Size.Height);
         }
-        public void Draw(Graphics g)
+
+    }
+    public class Line : Shape
+    {
+        Pen pen = new Pen(Color.Blue, 3);
+
+        public Line(int width, int height, Point position)
         {
-                g.FillRectangle(Brushes.Green, Position.X, Position.Y, Size.Width, Size.Height);
+            Size = new Size(width, height);
+            Position = position;
+            color = Color.Blue;
+        }
+
+        public override void Draw(Graphics g)
+        {
+            g.DrawLine(pen, Position.X, Position.Y, Size.Width, Size.Height);
         }
 
     }
